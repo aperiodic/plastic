@@ -3,19 +3,19 @@
   (:require [clojure.core.async :refer [>! <! chan take! put!]]))
 
 (defn publish-event!
-  [chan kind page-x page-y]
-  (put! chan {:kind kind, :page-x page-x, :page-y page-y}))
+  [chan kind event]
+  (put! chan {:kind kind, :event event}))
 
 (defn event-handler
   [events-chan kind]
   (fn [e]
-    (publish-event! events-chan kind (.-pageX e) (.-pageY e))))
+    (publish-event! events-chan kind e)))
 
 (defn event-processor
   [incoming]
   (go-loop []
-    (when-let [{:keys [kind page-x page-y]} (<! incoming)]
-      (.log js/console "got a" (name kind) "event at (" page-x "," page-y ")")
+    (when-let [{kind :kind, e :event} (<! incoming)]
+      (.log js/console "got a" (name kind) "event at (" (.-pageX e) "," (.-pageY e) ")")
       (recur))))
 
 (def ^:private kind->type
