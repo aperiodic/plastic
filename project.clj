@@ -8,17 +8,17 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.465"]]
 
+  :source-paths ["src/cljs" "src/cljc"]
   :profiles {:dev {:source-paths ["examples/"]}}
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.14"]]
 
   :figwheel {:css-dirs ["resources/public"]}
-
   :cljsbuild {
     :builds [{
       :id "dev"
-      :source-paths ["src/" "examples/"]
+      :source-paths ["src/cljs" "src/cljc" "examples/"]
       :figwheel true
       :compiler {
         :main "cypress.examples.hello-world"
