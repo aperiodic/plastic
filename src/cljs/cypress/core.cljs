@@ -1,6 +1,7 @@
 (ns cypress.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [clojure.core.async :refer [>! <! chan take! put!]]))
+  (:require [clojure.core.async :refer [>! <! chan take! put!]]
+            [cypress.state-machine :as sm]))
 
 (defn publish-event!
   [chan kind event]
