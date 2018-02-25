@@ -25,7 +25,11 @@
    :mouse-move "mousemove"})
 
 (defn init
-  [dom-event-root]
+  [dom-event-root ui-state-machine]
+  (when-not (sm/valid? ui-state-machine)
+    (throw
+      (js/TypeError.
+        (str "Invalid state machine: " (sm/validation-error ui-state-machine)))))
   (let [ui-events (chan 16)]
     (event-processor ui-events)
     (doseq [[event-kind dom-type] kind->type]
