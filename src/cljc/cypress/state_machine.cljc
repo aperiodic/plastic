@@ -14,7 +14,7 @@
   `from` and `to` are arbitrary keywords identifying states in the
   UI state machine, which you get to define; `on` is a keyword for the DOM event
   that should trigger the transition (e.g. :mousedown), and the optional
-  argument `update-state` is a function to call when this transition occurs that
+  `update-state` argument is a function to call when this transition occurs that
   will update the application state. This update function is given three arguments:
     * the current application state;
     * the new UI state (`to`) that the UI state machine has transitioned to;
@@ -26,7 +26,7 @@
    (add-transition state-machine from to on identity-update))
   ([state-machine from to on update-state]
    (update state-machine :transitions conj {:from from, :to to, :on on
-                                            :update-state update-state})))
+                                            :update update-state})))
 
 (defn- transitions-from*
   [state-or-frontier transitions]

@@ -11,13 +11,13 @@
           :transitions
           set
           (contains? {:from :idle, :to :active, :on :event
-                      :update-state identity-update})))
+                      :update identity-update})))
 
     (is (-> (add-transition blank [:idle :active :event inc])
           :transitions
           set
           (contains? {:from :idle, :to :active, :on :event
-                      :update-state inc})))))
+                      :update inc})))))
 
 (deftest has-start-state?-test
   (testing "state machines gotta be something with a :start entry"
