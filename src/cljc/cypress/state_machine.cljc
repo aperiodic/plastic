@@ -28,17 +28,28 @@
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update-state update-state})))
 
-(defn transitions-from
+(defn- transitions-from*
   [state-or-frontier transitions]
   (let [away-from-here? (if (set? state-or-frontier)
                           #(state-or-frontier (:from %))
                           #(= (:from %) state-or-frontier))]
     (filter away-from-here? transitions)))
 
+(defn transitions-from
+  [state-machine state]
+  (transitions-from* state (:transitions state-machine)))
+
+(defn states
+  [state-machine]
+  (->> (list (:start state-machine))
+    (concat (keep :to (:transitions state-machine)))
+    (concat (keep :from (:transitions state-machine)))
+    distinct))
+
 (defn- step-to-next-states
   [frontier reached? transitions-left]
   (let [transitions-out (filter transitions-left #(frontier (:from %)))
-        new-frontier (->> (transitions-from frontier transitions-left)
+        new-frontier (->> (transitions-from* frontier transitions-left)
                        (map :to)
                        set)
         from-old-frontier? #(contains? frontier (:from %))]
@@ -54,7 +65,7 @@
          transitions-left transitions-left]
     (cond
       (empty? transitions-left) reached?
-      (empty? (transitions-from frontier transitions-left)) reached?
+      (empty? (transitions-from* frontier transitions-left)) reached?
       :otherwise
       (let [next-step (step-to-next-states frontier reached? transitions-left)]
         (recur (:frontier next-step)
@@ -64,10 +75,7 @@
 (defn connected?
   [state-machine]
   (let [start (:start state-machine)
-        all-states (->> (list start)
-                     (concat (keep :to (:transitions state-machine)))
-                     (concat (keep :from (:transitions state-machine))))
-        no-states-reached (zipmap (distinct all-states) (repeat false))
+        no-states-reached (zipmap (states state-machine) (repeat false))
         state-reached? (visit-connected-states
                          #{start}
                          (assoc no-states-reached start true)
