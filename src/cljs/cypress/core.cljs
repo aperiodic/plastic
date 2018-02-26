@@ -24,6 +24,18 @@
    :mouse-up "mouseup"
    :mouse-move "mousemove"})
 
+(defn- unroll-machine
+  "Transform a state machine from the user-facing representation constructed by
+  functions in the SM namespace to an equivalent one that's optimized for
+  looking up the next state & update action based on the current state & event
+  just fired."
+  [state-machine]
+  (let [sm state-machine
+        all-states (sm/states sm)]
+    (into {} (for [state all-states]
+               [state (into {} (for [t (sm/transitions-from sm state)]
+                                 [(:on t) (select-keys t [:to :update])]))]))))
+
 (defn init
   [dom-event-root ui-state-machine]
   (when-not (sm/valid? ui-state-machine)
