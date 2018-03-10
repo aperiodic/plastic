@@ -1,7 +1,7 @@
 (ns cypress.state-machine)
 
 (defn identity-update
-  [app-state _ _]
+  [app-state _ui-state _triggering-event]
   app-state)
 
 (defn blank-state-machine

@@ -34,28 +34,27 @@
                                  [(:on t) (select-keys t [:to :update])]))]))))
 
 (defn event-processor
-  [state-machine incoming]
-  (println "unrolling state machine for event processing...")
+  [state-machine dom-events !state]
   (let [state-transitions (unroll-machine state-machine)]
-    (println "started go loop with unrolled machine:" state-transitions)
-    (go-loop [ui-state (:start state-machine)]
-      (when-let [{kind :kind, e :event} (<! incoming)]
-        (if-let [{:keys [to update]} (get-in state-transitions [ui-state kind])]
-          (do
-            (println "found" kind "event, transitioning to" to)
-            (recur to))
+    (go-loop [ui-state (:start state-machine)
+              app-state @!state]
+      (when-let [{kind :kind, e :event} (<! dom-events)]
+        (if-let [{to :to, app-update :update} (get-in state-transitions [ui-state kind])]
+          (let [app-state' (app-update app-state ui-state e)]
+            (reset! !state app-state')
+            (recur to app-state'))
           ; else (no transition found)
-          (recur ui-state))))))
+          (recur ui-state app-state))))))
 
-(defn init
-  [dom-event-root ui-state-machine]
+(defn init!
+  [dom-event-root ui-state-machine !app-state]
   (when-not (sm/valid? ui-state-machine)
     (throw
       (js/TypeError.
         (str "Invalid state machine: " (sm/validation-error ui-state-machine)))))
   (let [ui-events (chan 16)]
-    (event-processor ui-state-machine ui-events)
-    ; register a handler for every supported event type
+    (event-processor ui-state-machine ui-events !app-state)
+    ;; register a handler for every supported event type
     (doseq [[event-kind dom-event-name] event-kind->name]
       (.addEventListener dom-event-root
         dom-event-name
