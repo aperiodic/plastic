@@ -1,8 +1,10 @@
 (ns cypress.examples.hello-world
   (:require [cypress.core :as cyp]
-            [cypress.state-machine :as sm]))
+            [cypress.state-machine :as sm]
+            [om.core :as om]
+            [om.dom :as dom]))
 
-(enable-console-print!)
+(defonce !state (atom {:ups 0, :downs 0}))
 
 (defn sandbox-node
   []
@@ -29,7 +31,18 @@
 
 (defn start!
   []
-  (cyp/init (sandbox-node) click-unclick {:ups 0, :downs 0}))
+  (cyp/init! (sandbox-node) click-unclick !state)
+  (om/root
+    (fn [state _owner]
+      (reify
+        om/IRender
+        (render [_]
+          (dom/p nil
+                 (str "↓:" (:downs state)
+                      " ↑:" (:ups state) )))))
+    !state
+    {:target (.getElementById js/document "sandbox")}))
 
+(enable-console-print!)
 (clear-sandbox!)
 (start!)

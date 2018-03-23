@@ -5,4 +5,11 @@ body {
 #sandbox {
   height: 800px;
   border: 2px solid #3333cc;
+
+  font-size: 128px;
+}
+
+#sandbox > p {
+  margin-top: 0em;
+  margin-left: 0.125em;
 }

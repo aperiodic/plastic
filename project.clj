@@ -9,7 +9,8 @@
                  [org.clojure/core.async "0.3.465"]]
 
   :source-paths ["src/cljs" "src/cljc"]
-  :profiles {:dev {:source-paths ["examples/"]}}
+  :profiles {:dev {:source-paths ["examples/"]
+                   :dependencies [[org.omcljs/om "1.0.0-beta1"]]}}
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.14"]]
