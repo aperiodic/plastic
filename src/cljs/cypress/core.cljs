@@ -21,21 +21,10 @@
   (into {} (for [[k n] event-kind->name]
              [n k])))
 
-(defn- unroll-machine
-  "Transform a state machine from the user-facing representation constructed by
-  functions in the SM namespace to an equivalent one that's optimized for
-  looking up the next state & update action based on the current state & event
-  just fired."
-  [state-machine]
-  (let [sm state-machine
-        all-states (sm/states sm)]
-    (into {} (for [state all-states]
-               [state (into {} (for [t (sm/transitions-from sm state)]
-                                 [(:on t) (select-keys t [:to :update])]))]))))
 
 (defn event-processor
   [state-machine dom-events !state]
-  (let [state-transitions (unroll-machine state-machine)]
+  (let [state-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
       (when-let [{kind :kind, e :event} (<! dom-events)]
