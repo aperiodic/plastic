@@ -40,11 +40,17 @@
   (transitions-from* state (:transitions state-machine)))
 
 (defn states
+  "Given a state machine, return the set of its states."
   [state-machine]
   (->> (list (:start state-machine))
     (concat (keep :to (:transitions state-machine)))
     (concat (keep :from (:transitions state-machine)))
-    distinct))
+    set))
+
+(defn events
+  "Given a state machine, return the set of events used by the state machine."
+  [state-machine]
+  (set (keep :on (:transitions state-machine))))
 
 (defn unroll-machine
   "Transform a state machine from the user-facing representation constructed by
