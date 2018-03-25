@@ -130,6 +130,30 @@
                 duped
                 (cartesian (range 100 200) (range 100 200)))))))
 
+(deftest no-skipped-transitions?-test
+  (are [x] (no-skipped-transitions? x)
+    blank
+    (-> blank
+      (add-transition :idle :active :mouse-down))
+    (-> blank
+      (add-transition :idle :active :mouse-down)
+      (add-transition :idle :ui-popover :key-press))
+    (-> blank
+      (add-transition :idle   :active :mouse-down)
+      (add-transition :active :apply  :key-press)
+      (add-transition :apply  :idle   :skip)))
+
+  (are [x] (not (no-skipped-transitions? x))
+    (-> blank
+      (add-transition :idle :primed :skip)
+      (add-transition :idle :active :mouse-down))
+    (-> blank
+      (add-transition :idle :active :mouse-down)
+      (add-transition :idle :popover :key-press)
+      (add-transition :active :apply :mouse-up)
+      (add-transition :apply :idle :skip)
+      (add-transition :apply :cancel :key-down))))
+
 (deftest valid?-test
   (is (valid? (-> blank
                 (add-transition :idle :active :input)
@@ -144,6 +168,11 @@
       (-> blank
         (add-transition :idle :rome :saturnalia)
         (add-transition :idle :rome :coronation)))
+
+    (testing "skipped transitions"
+      (-> blank
+        (add-transition :idle :primed :skip)
+        (add-transition :idle :active :mouse-down)))
 
     (testing "connectedness"
       (-> blank

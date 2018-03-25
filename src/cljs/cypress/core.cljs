@@ -28,11 +28,14 @@
    :mouse-over "mouseover"
    :mouse-up "mouseup"
    :select "select"
+   :skip ""
    :touch-cancel "touchcancel"
    :touch-end "touchend"
    :touch-move "touchmove"
    :touch-start "touchstart"
    :wheel "wheel"})
+
+(def ^:private fake-events #{:skip})
 
 (def ^:private event-name->kind
   (into {} (for [[k n] event-kind->name]
@@ -41,16 +44,28 @@
 (def supported-event-kinds (set (keys event-kind->name)))
 (def supported-event-names (set (vals event-kind->name)))
 
+(defn follow-skips
+  "Follows any :skip transition out of the current UI state, and then continues
+  transitively until a state without a :skip transition is reached. Returns
+  a map with that UI state under :ui and the final app state under :app."
+  [ui-state-transitions ui-state app-state]
+  (if-let [transition (get-in ui-state-transitions [ui-state :skip])]
+    (let [{to :to, app-update :update} transition]
+      (recur ui-state-transitions to (app-update app-state)))
+    {:app app-state, :ui ui-state}))
+
 (defn event-processor
   [state-machine dom-events !state]
-  (let [state-transitions (sm/unroll-machine state-machine)]
+  (let [ui-state-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
       (when-let [{kind :kind, e :event} (<! dom-events)]
-        (if-let [{to :to, app-update :update} (get-in state-transitions [ui-state kind])]
-          (let [app-state' (app-update app-state ui-state e)]
-            (reset! !state app-state')
-            (recur to app-state'))
+        (if-let [{to :to, app-update :update} (get-in ui-state-transitions [ui-state kind])]
+          (let [{app' :app, ui' :ui} (follow-skips ui-state-transitions
+                                                   to
+                                                   (app-update app-state ui-state e))]
+            (reset! !state app')
+            (recur ui' app'))
           ; else (no transition found)
           (recur ui-state app-state))))))
 
@@ -76,7 +91,8 @@
     (event-processor ui-state-machine ui-events !app-state)
     ;; register a handler publishing to the loop's channel for every kind of
     ;; event that triggers any transition in the ui-state-machine
-    (doseq [event-kind (sm/events ui-state-machine)]
+    (doseq [event-kind (sm/events ui-state-machine)
+            :when (not (contains? fake-events event-kind))]
       (let [dom-event-name (event-kind->name event-kind)]
         (.addEventListener dom-event-root
           dom-event-name

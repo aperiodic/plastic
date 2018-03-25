@@ -107,6 +107,22 @@
        (count (distinct (->> transitions
                           (map #(select-keys % [:from :on]))))))))
 
+(defn no-skipped-transitions?
+  [state-machine]
+  (if-not (contains? (events state-machine) :skip)
+    true
+    (let [by-state (unroll-machine state-machine)]
+      ;; ensure that every state's transitions either don't trigger on :skip, or
+      ;; have only the :skip transition and no others
+      (every? #(or (not (contains? % :skip))
+                   (= 1 (count %)))
+              ;; this turns the unrolled state machine into a sequence of sets,
+              ;; one for each state, where each state's set has all the events
+              ;; that trigger transitions out of that state
+              (->> (vals by-state)
+                (map keys)
+                (map set))))))
+
 (defn has-start-state?
   [state-machine]
   (boolean (:start state-machine)))
@@ -119,13 +135,15 @@
       start state).
     * the state graph is connected, meaning every state is reachable from the
       start state;
-    * no state has multiple transitions out of the state for the same event.
+    * no state has multiple transitions out of the state for the same event;
+    * if a state has a :skip transition out of it, it has no other transitions.
   The second and third conditions may seem to be equivalent, but you can have
   transitions into every state in a disconnected graph by having a cycle of
   states that are all unreachable from the start state."
   [state-machine]
   (and (has-start-state? state-machine)
        (unique-transitions? state-machine)
+       (no-skipped-transitions? state-machine)
        (connected? state-machine)))
 
 (defn validation-error
