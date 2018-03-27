@@ -13,6 +13,11 @@
   (fn [e]
     (publish-event! events-chan kind e)))
 
+
+;; For the most part, these are the DOM & touch events that bubble, but one
+;; is a special psuedo-event:
+;;   * :skip - when a state has a transition that triggers on :skip, it's
+;;             followed immediately without waiting for a new event.
 (def ^:private event-kind->name
   {:click "click"
    :double-click "dblclick"
