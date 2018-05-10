@@ -17,7 +17,13 @@
           :transitions
           set
           (contains? {:from :idle, :to :active, :on :event
-                      :update inc})))))
+                      :update inc}))))
+
+  (testing "type validation"
+    (are [t] (thrown? IllegalArgumentException t)
+      (add-transition blank "start" :stop :mouse-up)
+      (add-transition blank :start "stop" :mouse-up)
+      (add-transition blank :start :stop "mouse-up"))))
 
 (deftest has-start-state?-test
   (testing "state machines gotta be something with a :start entry"

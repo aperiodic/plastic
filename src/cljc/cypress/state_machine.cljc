@@ -25,6 +25,10 @@
   ([state-machine from to on]
    (add-transition state-machine from to on identity-update))
   ([state-machine from to on update-state]
+   (when-not (every? keyword? [from to on])
+     (throw (IllegalArgumentException.
+              (str "the 'from' and 'to' states and the type of event to trigger"
+                   " 'on' must all be keywords"))))
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update update-state})))
 
