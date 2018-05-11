@@ -108,8 +108,7 @@
   [state-machine]
   (let [transitions (:transitions state-machine)]
     (= (count transitions)
-       (count (distinct (->> transitions
-                          (map #(select-keys % [:from :on]))))))))
+       (count (distinct (map #(select-keys % [:from :on]) transitions))))))
 
 (defn no-skipped-transitions?
   [state-machine]
