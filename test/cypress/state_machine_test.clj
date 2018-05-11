@@ -107,7 +107,7 @@
     (testing "lots of unique transitions are still unique"
       (reduce add-i-to-i+-on-ev-transition
               (blank-state-machine :state-0)
-              (cartesian (range 100) (range 100)))))
+              (cartesian (range 10) (range 10 20)))))
 
   (are [x] (not (unique-transitions? x))
     (testing "simplest duplicate"
@@ -127,14 +127,14 @@
         (add-transition :start :damascus :the-event)))
 
     (testing "needle in the haystack"
-      (let [w-10k-unique (reduce add-i-to-i+-on-ev-transition
-                                 (blank-state-machine :state-0)
-                                 (cartesian (range 100) (range 100)))
+      (let [w-many-unique (reduce add-i-to-i+-on-ev-transition
+                                  (blank-state-machine :state-0)
+                                  (cartesian (range 10) (range 10)))
             duped (add-i-to-i+-on-ev-transition
-                    w-10k-unique [(rand-int 100) (rand-int 100)])]
+                    w-many-unique [(rand-int 10) (rand-int 10)])]
         (reduce add-i-to-i+-on-ev-transition
                 duped
-                (cartesian (range 100 200) (range 100 200)))))))
+                (cartesian (range 10 20) (range 10 20)))))))
 
 (deftest no-skipped-transitions?-test
   (are [x] (no-skipped-transitions? x)
