@@ -45,55 +45,54 @@
                   (kw "event-" ei)))
 
 (deftest connected?-test
-  (are [x] (connected? x)
-    (testing "trivial state machines are trivially connected "
-      (blank-state-machine :idle))
+  (testing "trivial state machines are trivially connected "
+    (is (connected? (blank-state-machine :idle))))
 
-    (testing "cycles in the state machine are not required"
-      ;; but maybe they should be?
-      (-> (blank-state-machine :start)
-        (add-transition :start :a-state :_)
-        (add-transition :a-state :b-state :_)
-        (add-transition :b-state :c-state :_)))
+  (testing "cycles in the state machine are not required"
+    ;; but maybe they should be?
+    (is (connected? (-> (blank-state-machine :start)
+                      (add-transition :start :a-state :_)
+                      (add-transition :a-state :b-state :_)
+                      (add-transition :b-state :c-state :_)))))
 
-    (testing "the state-walking logic can handle multiple branches"
-      (-> (blank-state-machine :state-0)
-        (add-transition :state-0 :state-1 :_)
-        (add-transition :state-0 :state-2 :_)
-        (add-transition :state-0 :state-3 :_)
-        (add-transition :state-3 :state-4 :_)))
+  (testing "the state-walking logic can handle multiple branches"
+    (is (connected? (-> (blank-state-machine :state-0)
+                      (add-transition :state-0 :state-1 :_)
+                      (add-transition :state-0 :state-2 :_)
+                      (add-transition :state-0 :state-3 :_)
+                      (add-transition :state-3 :state-4 :_)))))
 
-    (testing "a lot of transitions still works in the positive case"
-        (reduce add-i-to-i+-transition
-                (blank-state-machine :state-0)
-                (range 1e3))))
+  (testing "a lot of transitions still works in the positive case"
+    (is (connected? (reduce add-i-to-i+-transition
+                            (blank-state-machine :state-0)
+                            (range 33)))))
 
-  (are [x] (not (connected? x))
-    (testing "simplest disconnected case"
-      (-> (blank-state-machine :oregon)
-        (add-transition :minnesota :south-dakota :road-trip)))
+  (testing "simplest disconnected case"
+    (is (not (connected? (-> (blank-state-machine :oregon)
+                           (add-transition :minnesota :south-dakota :road-trip))))))
 
-    (testing "the next simplest"
-      (-> (blank-state-machine :start)
-        (add-transition :start :next :_)
-        (add-transition :zarquat :plaquitrax :_)))
+  (testing "the next simplest"
+    (is (not (connected? (-> (blank-state-machine :start)
+                           (add-transition :start :next :_)
+                           (add-transition :zarquat :plaquitrax :_))))))
 
-    (testing "disconnected state not in last transition added"
-      (-> (blank-state-machine :state-0)
-        (add-transition :state-0 :state-1 :_)
-        (add-transition :state-1 :state-2 :_)
-        (add-transition :oh :how-did-i-get-here :_)
-        (add-transition :state-2 :state-0 :_)))
+  (testing "disconnected state not in last transition added"
+    (is (not (connected? (-> (blank-state-machine :state-0)
+                           (add-transition :state-0 :state-1 :_)
+                           (add-transition :state-1 :state-2 :_)
+                           (add-transition :oh :how-did-i-get-here :_)
+                           (add-transition :state-2 :state-0 :_))))))
 
-    (testing "disconnected start"
-      (-> (blank-state-machine :start)
-        (add-transition :not-start :also-not-start :_)
-        (add-transition :also-not-start :this-is-way-out-there :_))
+  (testing "disconnected start"
+    (is (not (connected? (-> (blank-state-machine :start)
+                           (add-transition :not-start :also-not-start :_)
+                           (add-transition :also-not-start :this-is-way-out-there :_)))))
 
-      (testing "with lot of transitions"
-        (reduce add-i-to-i+-transition
-                (blank-state-machine :start-disconnected)
-                (range 1e3))))))
+    (testing "with lot of transitions"
+      (is (not (connected? (-> (reduce add-i-to-i+-transition
+                                       (blank-state-machine :idle)
+                                       (range 33))
+                             (add-transition :nowhere :noplace :_))))))))
 
 (deftest unique-transitions?-test
   (are [x] (unique-transitions? x)
@@ -166,20 +165,18 @@
                 (add-transition :active :idle :end-of-input))))
 
   (testing "valid? appears to test for"
-    (are [x] (not (valid? x))
-      (testing "start state presence"
-        {}))
+    (testing "start state presence"
+      (is (not (valid? {}))))
 
     (testing "transition uniqueness"
-      (-> blank
-        (add-transition :idle :rome :saturnalia)
-        (add-transition :idle :rome :coronation)))
+      (is (not (valid? (-> blank
+                         (add-transition :idle :heisenbergs_house :observation)
+                         (add-transition :idle :bohrs_house :observation))))))
 
     (testing "skipped transitions"
-      (-> blank
-        (add-transition :idle :primed :skip)
-        (add-transition :idle :active :mouse-down)))
+      (is (not (valid? (-> blank
+                         (add-transition :idle :primed :skip)
+                         (add-transition :idle :active :mouse-down))))))
 
-    (testing "connectedness"
-      (-> blank
-        (add-transition :elswyr :skyrim :boredom)))))
+      (testing "connectedness"
+        (is (not (valid? (add-transition blank :elswyr :skyrim :boredom)))))))
