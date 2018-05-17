@@ -23,7 +23,22 @@
     (are [t] (thrown? IllegalArgumentException t)
       (add-transition blank "start" :stop :mouse-up)
       (add-transition blank :start "stop" :mouse-up)
-      (add-transition blank :start :stop "mouse-up"))))
+      (add-transition blank :start :stop "mouse-up"))
+
+    (are [t] (is t) ; roundabout assertion that exception is not thrown
+      (add-transition blank :start :stop :mouse-up)
+      (add-transition blank :start (constantly :stop) :mouse-up)))
+
+  (testing "dispatched transitions"
+    (let [dispatch (constantly :active)]
+      (is (contains?
+            (-> (add-transition blank :idle dispatch :event)
+              :transitions set)
+            {:from :idle, :to dispatch, :on :event, :update identity-update}))
+
+      (is (contains? (-> (add-transition blank :idle dispatch :event inc)
+                       :transitions set)
+                     {:from :idle, :to dispatch, :on :event, :update inc})))))
 
 (deftest has-start-state?-test
   (testing "state machines gotta be something with a :start entry"
@@ -43,6 +58,36 @@
                   (kw "state-" si)
                   (kw "state-" (inc si))
                   (kw "event-" ei)))
+
+(deftest dispatched-transition?-test
+  (testing "dispatched-transition?"
+    (testing "finds dispatched transitions"
+      (are [x] (dispatched-transition? x)
+        (add-transition blank :idle (constantly :active) :_)
+
+        (-> blank
+          (add-transition :idle :active :_)
+          (add-transition :active #(rand-nth [:idle :active]) :_))
+
+        (-> (blank-state-machine :neutral)
+          (add-transition :neutral :1st-gear :go)
+          (add-transition :1st-gear :2nd-gear :5mph)
+          (add-transition :2nd-gear #(rand-nth [:3rd-gear :1st-gear]) :traffic))
+
+        (-> (reduce add-i-to-i+-transition blank (range 20))
+          (add-transition :idle :state-0 :_)
+          (add-transition :state-20 #(rand-nth [:idle :state-10]) :_))))
+
+    (testing "returns false state machines without dispatched transitions"
+      (are [x] (not (dispatched-transition? x))
+        blank
+        (add-transition blank :idle :active :_)
+
+        (-> blank
+          (add-transition :idle :active :_)
+          (add-transition :active :idle :_))
+
+        (reduce add-i-to-i+-transition blank (range 20))))))
 
 (deftest connected?-test
   (testing "trivial state machines are trivially connected "
@@ -164,7 +209,7 @@
                 (add-transition :idle :active :input)
                 (add-transition :active :idle :end-of-input))))
 
-  (testing "valid? appears to test for"
+  (testing "valid? tests for"
     (testing "start state presence"
       (is (not (valid? {}))))
 
@@ -179,4 +224,9 @@
                          (add-transition :idle :active :mouse-down))))))
 
       (testing "connectedness"
-        (is (not (valid? (add-transition blank :elswyr :skyrim :boredom)))))))
+        (is (not (valid? (add-transition blank :elswyr :skyrim :wanderlust))))
+
+        (testing "unless there's a dispatched transition"
+          (is (valid? (add-transition blank
+                                      :elswyr, #(rand-nth [:skyrim :morrowind])
+                                      :wanderlust)))))))

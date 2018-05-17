@@ -11,24 +11,45 @@
 
 (defn add-transition
   "Add a new transition to the given state machine description. The
-  `from` and `to` are arbitrary keywords identifying states in the
-  UI state machine, which you get to define; `on` is a keyword for the DOM event
-  that should trigger the transition (e.g. :mousedown), and the optional
-  `update-state` argument is a function to call when this transition occurs that
-  will update the application state. This update function is given three arguments:
+  `from` state is a keyword specifying the state where the transition starts,
+  and `to` is either another keyword or a function that'll return a keyword; in
+  both cases the keyword is the state where the transition ends. `on` is
+  a keyword specifying the kind of DOM event that should trigger the transition
+  (e.g. :mousedown), and the optional `update-state` argument is a function to
+  call when this transition occurs that will update the application state.
+
+  The `update-state` function is called with three arguments:
     * the current application state;
     * the new UI state (`to`) that the UI state machine has transitioned to;
-    * the DOM event object that triggered the transition.
-  If `update-state` is omitted, then it defaults to the identity function."
+    * the DOM event object that triggered the transition;
+  and returns the new application state. If `update-state` is omitted, then it
+  defaults to a function that returns the same application state it's given.
+
+  If `to` is a function instead of a keyword, then the transition is called
+  a 'dispatched' transition, and `to` is the dispatch function. When the
+  transition is triggered, the dispatch function is called with two arguments:
+    * the current application state;
+    * the DOM event that triggered the transition;
+  and returns the keyword of the state where the transition will go this time.
+
+  Adding a dispatched transition does prevent cypress from checking a few
+  properties of the state machine graph: since the behavior of the dispatch
+  function is unknown, we can no longer guarantee that every state has some
+  transition into it, nor that the graph is connected. The only thing cypress
+  can check is that there aren't any conflicting transitions out of a state that
+  have the same event type."
   ([state-machine transition-seq]
    (apply add-transition state-machine transition-seq))
   ([state-machine from to on]
    (add-transition state-machine from to on identity-update))
   ([state-machine from to on update-state]
-   (when-not (every? keyword? [from to on])
+   (when-not (every? keyword? [from on])
      (throw (IllegalArgumentException.
-              (str "the 'from' and 'to' states and the type of event to trigger"
-                   " 'on' must all be keywords"))))
+              (str "the 'from' state and the type of event to trigger 'on' must"
+                   " both be keywords"))))
+   (when-not (or (keyword? to) (fn? to))
+     (throw (IllegalArgumentException.
+              "the 'to' state must be either a keyword or a function")))
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update update-state})))
 
@@ -67,6 +88,12 @@
     (into {} (for [state all-states]
                [state (into {} (for [t (transitions-from sm state)]
                                  [(:on t) (select-keys t [:to :update])]))]))))
+
+(defn dispatched-transition?
+  "Returns true if the state machine has at least one state whose transition is
+  dispatched (see `add-dispatched-transition`)."
+  [state-machine]
+  (not (every? keyword? (map :to (:transitions state-machine)))))
 
 (defn- step-to-next-states
   [frontier reached? transitions-left]
@@ -147,7 +174,9 @@
   (and (has-start-state? state-machine)
        (unique-transitions? state-machine)
        (no-skipped-transitions? state-machine)
-       (connected? state-machine)))
+       ;; graphs with a dispatched transition can't be checked for connectedness
+       (or (dispatched-transition? state-machine)
+           (connected? state-machine))))
 
 (defn validation-error
   [state-machine]
