@@ -59,19 +59,37 @@
       (recur ui-state-transitions to (app-update app-state)))
     {:app app-state, :ui ui-state}))
 
+(defn transition-target
+  "If 'to' is a keyword (i.e. state), return it; if it's a dispatch function,
+  call it with the app-state and triggering event to get the dispatched state to
+  transition to."
+  [to app-state event]
+  (if (keyword? to)
+    to
+    (let [dispatched-to (to app-state event)]
+      (if (keyword? dispatched-to)
+        dispatched-to
+        (throw (js/TypeError.
+                 (str "dispatch function " to " triggering on " event " did not"
+                      " return a keyword! Instead it returned"
+                      " " (pr-str dispatched-to))))))))
+
 (defn event-processor
   [state-machine dom-events !state]
-  (let [ui-state-transitions (sm/unroll-machine state-machine)]
+  (let [ui-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
       (when-let [{kind :kind, e :event} (<! dom-events)]
-        (if-let [{to :to, app-update :update} (get-in ui-state-transitions [ui-state kind])]
-          (let [{app' :app, ui' :ui} (follow-skips ui-state-transitions
-                                                   to
-                                                   (app-update app-state ui-state e))]
+        (if-let [{app-update :update :as transition} (get-in ui-transitions
+                                                             [ui-state kind])]
+          (let [to (transition-target (:to transition) app-state e)
+                {app' :app, ui' :ui} (follow-skips
+                                       ui-transitions
+                                       to
+                                       (app-update app-state ui-state e))]
             (reset! !state app')
             (recur ui' app'))
-          ; else (no transition found)
+          ; else no transition found
           (recur ui-state app-state))))))
 
 (defn init!
