@@ -1,4 +1,4 @@
-(defproject cypress "0.1.0-SNAPSHOT"
+(defproject cypress "0.1.0"
   :description "Webapp state management with pure event streams, not DOM event handlers."
   :url "https://github.com/aperiodic/cypress"
   :license {:name "Eclipse Public License"
