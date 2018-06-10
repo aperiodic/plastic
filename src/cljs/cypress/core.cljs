@@ -56,7 +56,7 @@
   [ui-state-transitions ui-state app-state]
   (if-let [transition (get-in ui-state-transitions [ui-state :skip])]
     (let [{to :to, app-update :update} transition]
-      (recur ui-state-transitions to (app-update app-state)))
+      (recur ui-state-transitions to (app-update app-state to :skip)))
     {:app app-state, :ui ui-state}))
 
 (defn transition-target
