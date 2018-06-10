@@ -44,12 +44,14 @@
    (add-transition state-machine from to on identity-update))
   ([state-machine from to on update-state]
    (when-not (every? keyword? [from on])
-     (throw (IllegalArgumentException.
-              (str "the 'from' state and the type of event to trigger 'on' must"
-                   " both be keywords"))))
+     (let [msg (str "the 'from' state and the type of event to trigger 'on'"
+                    " must both be keywords")]
+       (throw #?(:clj (IllegalArgumentException. msg)
+                 :cljs (js/TypeError. msg)))))
    (when-not (or (keyword? to) (fn? to))
-     (throw (IllegalArgumentException.
-              "the 'to' state must be either a keyword or a function")))
+     (let [msg "the 'to' state must be either a keyword or a function"]
+       (throw #?(:clj (IllegalArgumentException. msg)
+                 :cljs (js/TypeError. msg)))))
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update update-state})))
 
