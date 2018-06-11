@@ -75,49 +75,67 @@
                       " " (pr-str dispatched-to))))))))
 
 (defn event-processor
-  [state-machine dom-events !state]
+  [state-machine dom-events !state logging?]
   (let [ui-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
-      (when-let [{kind :kind, e :event} (<! dom-events)]
+      (when-let [{:keys [kind event]} (<! dom-events)]
+        (when logging? (println "Found a" kind "event"))
         (if-let [{app-update :update :as transition} (get-in ui-transitions
                                                              [ui-state kind])]
-          (let [to (transition-target (:to transition) app-state e)
-                {app' :app, ui' :ui} (follow-skips
-                                       ui-transitions
-                                       to
-                                       (app-update app-state ui-state e))]
-            (reset! !state app')
-            (recur ui' app'))
+          (do
+            (when logging?
+              (println)
+              (println "found transition from" ui-state "on" kind))
+            (let [to (transition-target (:to transition) app-state event)
+                  _ (when logging?
+                      (when (fn? (:to transition))
+                        (println "called dispatch fn to determine next state"))
+                      (println "transitioning to next state" to))
+                  {app' :app, ui' :ui} (follow-skips
+                                         ui-transitions
+                                         to
+                                         (app-update app-state to event))]
+              (when logging?
+                (println "transition complete, now in UI state" ui' "with new app state")
+                (println))
+              (reset! !state app')
+              (recur ui' app')))
           ; else no transition found
           (recur ui-state app-state))))))
 
+(def init!-default-opts
+  {:logging false})
+
 (defn init!
-  [dom-event-root ui-state-machine !app-state]
-  ;; ensure the state machine is well-formed
-  (when-not (sm/valid? ui-state-machine)
-    (throw
-      (js/TypeError.
-        (str "Invalid state machine: " (sm/validation-error ui-state-machine)))))
-  ;; ensure the state machine only uses supported events
-  (when-not (subset? (sm/events ui-state-machine) supported-event-kinds)
-    (let [unsupported (set/difference (sm/events ui-state-machine)
-                                      supported-event-kinds)
-          plural? (> (count unsupported) 1)]
-      (throw
-        (js/TypeError.
-          (str "Unsupported event "
-               (if plural? "types" "type") " "
-               (if plural? (seq unsupported) (first unsupported)))))))
-  (let [ui-events (chan 16)]
-    ;; start the event loop
-    (event-processor ui-state-machine ui-events !app-state)
-    ;; register a handler publishing to the loop's channel for every kind of
-    ;; event that triggers any transition in the ui-state-machine
-    (doseq [event-kind (sm/events ui-state-machine)
-            :when (not (contains? fake-events event-kind))]
-      (let [dom-event-name (event-kind->name event-kind)]
-        (.addEventListener dom-event-root
-          dom-event-name
-          (event-handler ui-events event-kind)
-          #js {:passive false})))))
+  ([dom-event-root ui-state-machine !app-state]
+   (init! dom-event-root ui-state-machine !app-state init!-default-opts))
+  ([dom-event-root ui-state-machine !app-state opts]
+   ;; ensure the state machine is well-formed
+   (when-not (sm/valid? ui-state-machine)
+     (throw
+       (js/TypeError.
+         (str "Invalid state machine: " (sm/validation-error ui-state-machine)))))
+   ;; ensure the state machine only uses supported events
+   (when-not (subset? (sm/events ui-state-machine) supported-event-kinds)
+     (let [unsupported (set/difference (sm/events ui-state-machine)
+                                       supported-event-kinds)
+           plural? (> (count unsupported) 1)]
+       (throw
+         (js/TypeError.
+           (str "Unsupported event "
+                (if plural? "types" "type") " "
+                (if plural? (seq unsupported) (first unsupported)))))))
+   (let [{:keys [logging]} (merge init!-default-opts opts)
+         ui-events (chan 16)]
+     ;; start the event loop
+     (event-processor ui-state-machine all-events !app-state logging)
+     ;; register a handler publishing to the loop's channel for every kind of
+     ;; event that triggers any transition in the ui-state-machine
+     (doseq [event-kind (sm/events ui-state-machine)
+             :when (not (contains? fake-events event-kind))]
+       (let [dom-event-name (event-kind->name event-kind)]
+         (.addEventListener dom-event-root
+           dom-event-name
+           (event-handler ui-events event-kind)
+           #js {:passive false}))))))
