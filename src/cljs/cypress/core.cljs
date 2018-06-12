@@ -1,6 +1,7 @@
 (ns cypress.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [clojure.core.async :refer [>! <! chan take! put!]]
+  (:require [cljs.core.async :as async]
+            [clojure.core.async :refer [>! <! chan take! put!]]
             [clojure.set :as set :refer [subset?]]
             [cypress.state-machine :as sm]))
 
@@ -13,9 +14,8 @@
   (fn [e]
     (publish-event! events-chan kind e)))
 
-
-;; For the most part, these are the DOM & touch events that bubble, but one
-;; is a special psuedo-event:
+;; For the most part, cypress's events are the DOM & touch events that bubble,
+;; but there is a special event that doesn't correspond to an HTML event:
 ;;   * :skip - when a state has a transition that triggers on :skip, it's
 ;;             followed immediately without waiting for a new event.
 (def ^:private event-kind->name
@@ -33,21 +33,15 @@
    :mouse-over "mouseover"
    :mouse-up "mouseup"
    :select "select"
-   :skip ""
    :touch-cancel "touchcancel"
    :touch-end "touchend"
    :touch-move "touchmove"
    :touch-start "touchstart"
    :wheel "wheel"})
 
-(def ^:private fake-events #{:skip})
-
 (def ^:private event-name->kind
   (into {} (for [[k n] event-kind->name]
              [n k])))
-
-(def supported-event-kinds (set (keys event-kind->name)))
-(def supported-event-names (set (vals event-kind->name)))
 
 (defn follow-skips
   "Follows any :skip transition out of the current UI state, and then continues
@@ -75,11 +69,11 @@
                       " " (pr-str dispatched-to))))))))
 
 (defn event-processor
-  [state-machine dom-events !state logging?]
+  [state-machine events !state logging?]
   (let [ui-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
-      (when-let [{:keys [kind event]} (<! dom-events)]
+      (when-let [{:keys [kind event]} (<! events)]
         (when logging? (println "Found a" kind "event"))
         (if-let [{app-update :update :as transition} (get-in ui-transitions
                                                              [ui-state kind])]
@@ -104,38 +98,45 @@
           ; else no transition found
           (recur ui-state app-state))))))
 
+(defn- custom-event-processor
+  [kind]
+  (fn [e]
+    {:kind kind, :event e}))
+
 (def init!-default-opts
   {:logging false})
 
 (defn init!
-  ([dom-event-root ui-state-machine !app-state]
-   (init! dom-event-root ui-state-machine !app-state init!-default-opts))
-  ([dom-event-root ui-state-machine !app-state opts]
+  ([dom-event-roots ui-state-machine !app-state]
+   (init! dom-event-roots {} ui-state-machine !app-state init!-default-opts))
+  ([dom-event-roots custom-event-chans ui-state-machine !app-state]
+   (init! dom-event-roots custom-event-chans ui-state-machine !app-state
+          init!-default-opts))
+  ([dom-event-roots custom-event-chans ui-state-machine !app-state opts]
    ;; ensure the state machine is well-formed
    (when-not (sm/valid? ui-state-machine)
      (throw
        (js/TypeError.
          (str "Invalid state machine: " (sm/validation-error ui-state-machine)))))
-   ;; ensure the state machine only uses supported events
-   (when-not (subset? (sm/events ui-state-machine) supported-event-kinds)
-     (let [unsupported (set/difference (sm/events ui-state-machine)
-                                       supported-event-kinds)
-           plural? (> (count unsupported) 1)]
-       (throw
-         (js/TypeError.
-           (str "Unsupported event "
-                (if plural? "types" "type") " "
-                (if plural? (seq unsupported) (first unsupported)))))))
    (let [{:keys [logging]} (merge init!-default-opts opts)
-         ui-events (chan 16)]
+         ui-events (chan 16)
+         dom-nodes (if (vector? dom-event-roots)
+                     dom-event-roots
+                     [dom-event-roots])
+         all-events (-> (for [[kind channel] custom-event-chans]
+                          (let [->cypress-event (custom-event-processor kind)]
+                            (async/pipe channel
+                                        (async/chan 4 (map ->cypress-event)))))
+                      (conj ui-events)
+                      (async/merge))]
      ;; start the event loop
      (event-processor ui-state-machine all-events !app-state logging)
      ;; register a handler publishing to the loop's channel for every kind of
      ;; event that triggers any transition in the ui-state-machine
-     (doseq [event-kind (sm/events ui-state-machine)
-             :when (not (contains? fake-events event-kind))]
-       (let [dom-event-name (event-kind->name event-kind)]
-         (.addEventListener dom-event-root
-           dom-event-name
-           (event-handler ui-events event-kind)
-           #js {:passive false}))))))
+     (doseq [dom-node dom-nodes
+             event-kind (sm/events ui-state-machine)
+             :when (contains? event-kind->name event-kind)]
+       (.addEventListener dom-node
+         (event-kind->name event-kind)
+         (event-handler ui-events event-kind)
+         #js {:passive false})))))

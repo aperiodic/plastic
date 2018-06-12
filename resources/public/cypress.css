@@ -13,3 +13,9 @@ body {
   margin-top: 0em;
   margin-left: 0.125em;
 }
+
+#sibling {
+  width: 15em;
+  height: 15em;
+  background-color: #180600;
+}

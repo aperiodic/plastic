@@ -22,7 +22,7 @@
       :source-paths ["src/cljs" "src/cljc" "examples/"]
       :figwheel true
       :compiler {
-        :main "cypress.examples.dispatched"
+        :main "cypress.examples.custom-events"
         :asset-path "js/out"
         :output-to "resources/public/js/cypress.js"
         :output-dir "resources/public/js/out"
