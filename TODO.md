@@ -1,12 +1,14 @@
-# V0 Tasks
+# V1 Tasks
 
-[X] app state, not just UI state
-[x] compile list of events that should be supported
-[x] finalize how event types are represented & validated
-  - yeah don't see any problem with KWs, and they're easy & normal
-[ ] use in Arcane Lab to replace Zelkova, address any issues that arise
+[ ] some sort of tests for JS parts
+[ ] v2 state machine construction
+  - probably want some sort of macro that compiles down to existing version but lets you define states explicitly
+    * this does allow for isolated states w/out transitions so should check for that in the macro itself
+[ ] shortcut for key down, up types so you could do like :e-down (should allow for codes too)
 
 # Public Release Tasks
 
+[ ] README quick start
+[ ] more examples (crib from Zelkova)
+[ ] introductory tutorial
 [ ] landing page
-[ ] introductory guide
