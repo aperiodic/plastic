@@ -17,30 +17,40 @@ The source code for Lab Maniac is [available on GitHub][lab-maniac-source].
 [lab-maniac]: http://labmaniac.com
 [lab-maniac-source]: https://github.com/aperiodic/arcane-lab
 
-## Gimme the Goods
+## Quick Start
 
-Add these to your project.clj:
+If you want to get going in the shortest possible time, use the leiningen template:
+```clj
+lein new cypress hello-world-cypress
+```
+It contains a trivial Cypress app that's rendered with [Om][om] and comes with a [figwheel][figwheel] development workflow.
+
+[om]: https://github.com
+[figwheel]: https://github.com/bhauman/lein-figwheel
+
+Open up the main file at `src/cljs/your-project-name/main.cljs` to see the whole app.
+If you'd like a more guided introduction, read along below as it walks you through the structure of the main file
+
+## Introduction by Example
+
+This short guide walks you through building a trivial app with Cypress, starting from something like the figwheel template (run `lein new figwheel cypress-example` to get a copy).
+The application will count the number of mouse down and up events.
+
+Add these dependencies to the project.clj:
 ```clj
 [cypress "1.0.0"]
 [org.omcljs/om "1.0.0-beta1"]
 ```
-If you're super impatient, copy over `examples/cypress/examples/hello_world.cljs` into your project.
-Otherwise, follow along below to write the hello world example together.
 
-## Introduction by Example
-
-Let's build a tiny application that tracks the number of mouse down and up events.
-First, we'll import all the namespaces we're going to use.
-
+Now open up the main clojurescript source file, and import the Cypress namespaces we'll be using:
 ```clj
 (ns tiny-example
   (:require [cypress.core :as cypress]
             [cypress.state-machine :as state]))
 ```
 
-Then, let's define the starting application state.
+Then we can define the application's starting state.
 It's pretty simple because all we care up is the two numbers, which we'll call `:ups` and `:downs`.
-
 ```clj
 (def !state (atom {:ups 0, :downs 0}))
 ```
@@ -134,10 +144,6 @@ Then we can add them to our state machine by passing them to `cypress.state-mach
 
 After refreshing to load the new version, we can see the counts go up when we click.
 Congratulations! You now have your first complete Cypress application.
-
-## Lein Template (Figwheel Included!)
-
-TODO
 
 ## License
 

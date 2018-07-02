@@ -8,7 +8,8 @@
 
 # Public Release Tasks
 
-[ ] README quick start
+[x] README quick start
+[x] lein template
 [ ] more examples (crib from Zelkova)
-[ ] introductory tutorial
+[x] introductory tutorial
 [ ] landing page
