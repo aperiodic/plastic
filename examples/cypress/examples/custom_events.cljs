@@ -73,6 +73,10 @@
     !state
     {:target (sandbox-node)}))
 
-(enable-console-print!)
-(clear-sandbox!)
-(start!)
+(defn -main
+  [& _]
+  (enable-console-print!)
+  (clear-sandbox!)
+  (start!))
+
+(-main)
