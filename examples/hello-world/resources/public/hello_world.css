@@ -1,0 +1,16 @@
+body {
+  background-color: #f7f7f7;
+}
+
+#hello-world {
+  border: 3px solid #3333cc;
+  font-size: 128px;
+  color: #3e2211;
+
+  cursor: pointer;
+}
+
+#hello-world > p {
+  margin-top: 0em;
+  margin-bottom: 0.1em;
+}
