@@ -9,7 +9,7 @@
                  [org.clojure/core.async "0.3.465"]]
 
   :source-paths ["src/cljs" "src/cljc"]
-  :profiles {:dev {:source-paths ["examples/"]
+  :profiles {:dev {:source-paths ["dev-sandbox"]
                    :dependencies [[org.omcljs/om "1.0.0-beta1"]]}}
 
   :plugins [[lein-cljsbuild "1.1.7"]
@@ -19,10 +19,10 @@
   :cljsbuild {
     :builds [{
       :id "dev"
-      :source-paths ["src/cljs" "src/cljc" "examples/"]
+      :source-paths ["src/cljs" "src/cljc" "dev-sandbox"]
       :figwheel true
       :compiler {
-        :main "cypress.examples.custom-events"
+        :main "cypress.sandbox.main"
         :asset-path "js/out"
         :output-to "resources/public/js/cypress.js"
         :output-dir "resources/public/js/out"

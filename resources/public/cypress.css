@@ -2,20 +2,20 @@ body {
   background-color: #f7f7f7;
 }
 
-#sandbox {
+.app {
   height: 800px;
   border: 2px solid #3333cc;
 
   font-size: 128px;
 }
 
-#sandbox > p {
+.app p {
   margin-top: 0em;
   margin-left: 0.125em;
 }
 
 #sibling {
-  width: 15em;
-  height: 15em;
+  width: 5em;
+  height: 5em;
   background-color: #180600;
 }
