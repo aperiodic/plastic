@@ -1,0 +1,41 @@
+body {
+  background-color: #f7f7f7;
+}
+
+div#dynamic-transitions {
+  width: 900px;
+}
+
+div.game-wrapper {
+  width: 900px;
+  height: 900px;
+  position: relative;
+
+  outline: 4px solid #333388;
+  font-size: 128px;
+  color: #3e2211;
+  text-align: center;
+}
+
+div.target {
+  position: absolute;
+  background-color: #ce6a15;
+}
+
+.game-message {
+  padding-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+.game-sub-message {
+  font-size: 96px;
+}
+
+div.scoreboard {
+  text-align: right;
+  font-size: 96px;
+}
+
+span.goal {
+  margin-right: 0.25em;
+}
