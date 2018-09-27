@@ -1,4 +1,5 @@
-(ns cypress.state-machine)
+(ns cypress.state-machine
+  (:require [clojure.string :as str]))
 
 (defn identity-update
   [app-state _ui-state _triggering-event]
@@ -9,14 +10,50 @@
   {:start start-state
    :transitions ()})
 
+(defn- name->culprit
+  [nombre]
+  (if (empty? nombre)
+    "expecting"
+    (str nombre " must be")))
+
+(defn throw-unexpected-arg
+  [& msg-parts]
+  (let [msg (str/join " " msg-parts)]
+    (throw #?(:clj (IllegalArgumentException. msg)
+              :cljs (js/TypeError. msg)))))
+
+(defn validate-kw
+  ([x] (validate-kw x ""))
+  ([x nombre]
+   (when-not (keyword? x)
+     (throw-unexpected-arg
+       (name->culprit nombre) "a keyword, not a" (type x)))))
+
+(defn validate-kw-or-fn
+  ([x] (validate-kw-or-fn x ""))
+  ([x nombre]
+   (cond
+     (keyword? x) nil
+     (fn? x) nil
+     :else (throw-unexpected-arg
+             (name->culprit nombre) "a keyword or a function, not a" (type x)))))
+
 (defn add-transition
-  "Add a new transition to the given state machine description. The
-  `from` state is a keyword specifying the state where the transition starts,
-  and `to` is either another keyword or a function that'll return a keyword; in
-  both cases the keyword is the state where the transition ends. `on` is
-  a keyword specifying the kind of DOM event that should trigger the transition
-  (e.g. :mousedown), and the optional `update-state` argument is a function to
-  call when this transition occurs that will update the application state.
+  "Add a new transition to the given state machine description.
+
+  `from` is a keyword specifying the state where the transition starts.
+
+  `to` is either another keyword or a function that'll return a keyword; in
+  both cases the keyword is the state where the transition ends.
+
+  `on` is either a keyword specifying the kind of DOM event that should trigger
+  the transition (e.g. :mousedown), or a recognition function that takes the
+  triggering event and returns truthy if the transition should fire due to that
+  event, or falsey if not. When `on` is a keyword, the transition is said to
+  have a 'DOM' trigger; when it's a recognition function, a 'custom' trigger.
+
+  The optional `update-state` argument is a function to call when this
+  transition occurs that will update the application state.
 
   The `update-state` function is called with three arguments:
     * the current application state;
@@ -37,21 +74,20 @@
   function is unknown, we can no longer guarantee that every state has some
   transition into it, nor that the graph is connected. The only thing cypress
   can check is that there aren't any conflicting transitions out of a state that
-  have the same event type."
+  have the same event type.
+
+  Transitions with custom triggers (i.e. that have a recognition function for
+  `on` instead of a DOM event keyword) is primarily useful when you're
+  triggering your own custom events using a core.async channel passed to
+  cypress's init fn; otherwise you should stick to the DOM triggers."
   ([state-machine transition-seq]
    (apply add-transition state-machine transition-seq))
   ([state-machine from to on]
    (add-transition state-machine from to on identity-update))
   ([state-machine from to on update-state]
-   (when-not (every? keyword? [from on])
-     (let [msg (str "the 'from' state and the type of event to trigger 'on'"
-                    " must both be keywords")]
-       (throw #?(:clj (IllegalArgumentException. msg)
-                 :cljs (js/TypeError. msg)))))
-   (when-not (or (keyword? to) (fn? to))
-     (let [msg "the 'to' state must be either a keyword or a function"]
-       (throw #?(:clj (IllegalArgumentException. msg)
-                 :cljs (js/TypeError. msg)))))
+   (validate-kw from "the state to trigger 'from'")
+   (validate-kw-or-fn on "the type of event to trigger 'on'")
+   (validate-kw-or-fn to "the state to transition 'to'")
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update update-state})))
 
@@ -70,12 +106,15 @@
   "Given a state machine, return the set of its states."
   [state-machine]
   (->> (list (:start state-machine))
-    (concat (keep :to (:transitions state-machine)))
+    (concat (->> (:transitions state-machine) (map :to) (filter keyword?)))
     (concat (keep :from (:transitions state-machine)))
     set))
 
 (defn events
-  "Given a state machine, return the set of events used by the state machine."
+  "Given a state machine, return the set of events used by the state machine.
+  Normally, this is a set of keywords, but if the state machine has any
+  trasitions that are custom triggered (i.e. have event recognition functions
+  instead of event keywords), then this set will include its recognition fns."
   [state-machine]
   (set (keep :on (:transitions state-machine))))
 

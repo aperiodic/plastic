@@ -35,8 +35,18 @@
             (transitions-of (add-transition blank :idle dispatch :event))
             {:from :idle, :to dispatch, :on :event, :update identity-update}))
 
-      (is (contains? (transitions-of (add-transition blank :idle dispatch :event inc))
-                     {:from :idle, :to dispatch, :on :event, :update inc})))))
+      (is (contains?
+            (transitions-of (add-transition blank :idle dispatch :event inc))
+            {:from :idle, :to dispatch, :on :event, :update inc}))))
+
+  (testing "event recognition fns"
+    (let [parity (blank-state-machine :even)
+          const-odd (constantly :odd)]
+      (is (contains?
+            (transitions-of (add-transition parity :even :odd odd?))
+            {:from :even, :to :odd, :on odd?, :update identity-update}))
+      (is (contains? (transitions-of (add-transition parity :even :odd odd? const-odd))
+                     {:from :even, :to :odd, :on odd?, :update const-odd})))))
 
 (deftest has-start-state?-test
   (testing "state machines gotta be something with a :start entry"
