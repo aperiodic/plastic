@@ -5,17 +5,17 @@
 
 (def blank (blank-state-machine :idle))
 
+(def transitions-of (comp set :transitions))
+
 (deftest add-transition-test
   (testing "binary arity of add-transition"
     (is (-> (add-transition blank [:idle :active :event])
-          :transitions
-          set
+          transitions-of
           (contains? {:from :idle, :to :active, :on :event
                       :update identity-update})))
 
     (is (-> (add-transition blank [:idle :active :event inc])
-          :transitions
-          set
+          transitions-of
           (contains? {:from :idle, :to :active, :on :event
                       :update inc}))))
 
@@ -32,12 +32,10 @@
   (testing "dispatched transitions"
     (let [dispatch (constantly :active)]
       (is (contains?
-            (-> (add-transition blank :idle dispatch :event)
-              :transitions set)
+            (transitions-of (add-transition blank :idle dispatch :event))
             {:from :idle, :to dispatch, :on :event, :update identity-update}))
 
-      (is (contains? (-> (add-transition blank :idle dispatch :event inc)
-                       :transitions set)
+      (is (contains? (transitions-of (add-transition blank :idle dispatch :event inc))
                      {:from :idle, :to dispatch, :on :event, :update inc})))))
 
 (deftest has-start-state?-test
