@@ -43,7 +43,7 @@
   (into {} (for [[k n] event-kind->name]
              [n k])))
 
-(defn follow-skips
+(defn- follow-skips
   "Follows any :skip transition out of the current UI state, and then continues
   transitively until a state without a :skip transition is reached. Returns
   a map with that UI state under :ui and the final app state under :app."
@@ -53,7 +53,7 @@
       (recur ui-state-transitions to (app-update app-state to :skip)))
     {:app app-state, :ui ui-state}))
 
-(defn transition-target
+(defn- transition-target
   "If 'to' is a keyword (i.e. state), return it; if it's a dispatch function,
   call it with the app-state and triggering event to get the dispatched state to
   transition to."
