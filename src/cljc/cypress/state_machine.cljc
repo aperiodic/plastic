@@ -127,8 +127,16 @@
   (let [sm state-machine
         all-states (states sm)]
     (into {} (for [state all-states]
-               [state (into {} (for [t (transitions-from sm state)]
-                                 [(:on t) (select-keys t [:to :update])]))]))))
+               (let [outs (transitions-from sm state)
+                     custom-trigger? (comp fn? :on)
+                     custom-outs (filter custom-trigger? outs)
+                     static-outs (remove custom-trigger? outs)
+                     with-custom (if (empty? custom-outs)
+                                    {}
+                                    {:cypress/event-recognizers custom-outs})]
+                 [state (into with-custom
+                              (for [t static-outs]
+                                 [(:on t) (select-keys t [:to :update])]))])))))
 
 (defn dispatched-transition?
   "Returns true if the state machine has at least one state whose transition is

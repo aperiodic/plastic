@@ -68,20 +68,51 @@
                       " return a keyword! Instead it returned"
                       " " (pr-str dispatched-to))))))))
 
+(defn- dest-descr
+  [{to :to, :as transition}]
+  (if (keyword? to)
+    (str "to " to)
+    "with dispatched destination"))
+
+(defn- triggered-transition
+  "Given an unrolled state machine's transition map for a particular state and
+  a triggering event, return the transition triggered by the event (if any), and
+  nil otherwise."
+  [state-transitions {::keys [event kind]} logging?]
+  (or (get state-transitions kind)
+      (if-let [custom-triggered (:cypress/event-recognizers state-transitions)]
+        (do
+          (when logging?
+            (println "Looking for a recognition function that fires on this"
+                     kind "event"))
+          (loop [transitions custom-triggered]
+            (if (empty? transitions)
+              (when logging?
+                (println "No recognition function fired on the" kind "event"))
+              (let [{should-fire? :on, :as transition} (first transitions)]
+                (if (should-fire? event)
+                  (do (when logging?
+                        (println "Transition" (dest-descr transition)
+                                 "fired on the" kind "event"))
+                    transition)
+                  (recur (next transitions))))))))))
+
 (defn event-processor
   [state-machine events !state logging?]
   (let [ui-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
-      (when-let [{:keys [kind event]} (<! events)]
+      (when-let [{:keys [event kind], :as wrapped-event} (<! events)]
         (when logging? (println "Found a" kind "event"))
-        (if-let [{app-update :update :as transition} (get-in ui-transitions
-                                                             [ui-state kind])]
+        (if-let [t (triggered-transition (get ui-transitions ui-state)
+                                         wrapped-event
+                                         logging?)]
           (do
             (when logging?
               (println)
               (println "found transition from" ui-state "on" kind))
-            (let [to (transition-target (:to transition) app-state event)
+            (let [{app-update :update :as transition} t
+                  to (transition-target (:to transition) app-state event)
                   _ (when logging?
                       (when (fn? (:to transition))
                         (println "called dispatch fn to determine next state"))
