@@ -103,26 +103,28 @@
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
       (when-let [{:keys [event kind], :as wrapped-event} (<! events)]
-        (when logging? (println "Found a" kind "event"))
+        (when logging?
+          (println "Found a" kind "event" (str (pr-str event) ",")
+                   "full log on next line")
+          (.log js/console event))
         (if-let [t (triggered-transition (get ui-transitions ui-state)
                                          wrapped-event
                                          logging?)]
           (do
             (when logging?
-              (println)
-              (println "found transition from" ui-state "on" kind))
+              (println "Found transition from" ui-state "on" kind))
             (let [{app-update :update :as transition} t
                   to (transition-target (:to transition) app-state event)
                   _ (when logging?
                       (when (fn? (:to transition))
-                        (println "called dispatch fn to determine next state"))
-                      (println "transitioning to next state" to))
+                        (println "Called dispatch fn to determine next state"))
+                      (println "Transitioning to next state" to))
                   {app' :app, ui' :ui} (follow-skips
                                          ui-transitions
                                          to
                                          (app-update app-state to event))]
               (when logging?
-                (println "transition complete, now in UI state" ui' "with new app state")
+                (println "Transition complete, now in UI state" ui' "with new app state")
                 (println))
               (reset! !state app')
               (recur ui' app')))
