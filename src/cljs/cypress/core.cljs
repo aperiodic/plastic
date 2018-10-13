@@ -5,14 +5,19 @@
             [clojure.set :as set :refer [subset?]]
             [cypress.state-machine :as sm]))
 
-(defn publish-event!
-  [chan kind event]
-  (put! chan {:kind kind, :event event}))
+(defn- wrap-custom-event
+  ([event] (wrap-custom-event event :custom))
+  ([event kind]
+   {::kind kind, ::event event}))
+
+(defn- wrap-dom-event
+  [kind event]
+  {::kind kind, ::event event})
 
 (defn event-handler
   [events-chan kind]
   (fn [e]
-    (publish-event! events-chan kind e)))
+    (put! events-chan (wrap-dom-event kind e))))
 
 ;; For the most part, cypress's events are the DOM & touch events that bubble,
 ;; but there is a special event that doesn't correspond to an HTML event:
@@ -102,7 +107,7 @@
   (let [ui-transitions (sm/unroll-machine state-machine)]
     (go-loop [ui-state (:start state-machine)
               app-state @!state]
-      (when-let [{:keys [event kind], :as wrapped-event} (<! events)]
+      (when-let [{::keys [event kind], :as wrapped-event} (<! events)]
         (when logging?
           (println "Found a" kind "event" (str (pr-str event) ",")
                    "full log on next line")
@@ -131,17 +136,27 @@
           ; else no transition found
           (recur ui-state app-state))))))
 
-(defn- custom-event-processor
-  [kind]
-  (fn [e]
-    {:kind kind, :event e}))
+(defn- synthesize-channels
+  [ui-events custom-events]
+  (if (empty? custom-events)
+    ui-events
+    (let [custom-chans (if (map? custom-events)
+                         (for [[kind channel] custom-events]
+                           (let [wrap #(wrap-custom-event % kind)]
+                             (async/pipe channel (async/chan 4 (map wrap)))))
+                         ;; else custom-events just flat coll of chans
+                         (for [channel custom-events]
+                           (async/pipe
+                             channel
+                             (async/chan 4 (map wrap-custom-event)))))]
+      (async/merge (conj custom-chans ui-events)))))
 
 (def init!-default-opts
   {:logging false})
 
 (defn init!
   ([dom-event-roots ui-state-machine !app-state]
-   (init! dom-event-roots {} ui-state-machine !app-state init!-default-opts))
+   (init! dom-event-roots () ui-state-machine !app-state init!-default-opts))
   ([dom-event-roots custom-event-chans ui-state-machine !app-state]
    (init! dom-event-roots custom-event-chans ui-state-machine !app-state
           init!-default-opts))
@@ -156,12 +171,7 @@
          dom-nodes (if (vector? dom-event-roots)
                      dom-event-roots
                      [dom-event-roots])
-         all-events (-> (for [[kind channel] custom-event-chans]
-                          (let [->cypress-event (custom-event-processor kind)]
-                            (async/pipe channel
-                                        (async/chan 4 (map ->cypress-event)))))
-                      (conj ui-events)
-                      (async/merge))]
+         all-events (synthesize-channels ui-events custom-event-chans)]
      ;; start the event loop
      (event-processor ui-state-machine all-events !app-state logging)
      ;; register a handler publishing to the loop's channel for every kind of
