@@ -1,4 +1,5 @@
 (ns cypress.state-machine-test
+  (:refer-clojure :exclude [identity])
   (:require [clojure.test :refer [are deftest is testing]]
             [cypress.state-machine :refer :all]
             [cypress.useful :refer [kw cartesian]]))
@@ -12,7 +13,7 @@
     (is (-> (add-transition blank [:idle :active :event])
           transitions-of
           (contains? {:from :idle, :to :active, :on :event
-                      :update identity-update})))
+                      :update identity})))
 
     (is (-> (add-transition blank [:idle :active :event inc])
           transitions-of
@@ -33,7 +34,7 @@
     (let [dispatch (constantly :active)]
       (is (contains?
             (transitions-of (add-transition blank :idle dispatch :event))
-            {:from :idle, :to dispatch, :on :event, :update identity-update}))
+            {:from :idle, :to dispatch, :on :event, :update identity}))
 
       (is (contains?
             (transitions-of (add-transition blank :idle dispatch :event inc))
@@ -44,7 +45,7 @@
           const-odd (constantly :odd)]
       (is (contains?
             (transitions-of (add-transition parity :even :odd odd?))
-            {:from :even, :to :odd, :on odd?, :update identity-update}))
+            {:from :even, :to :odd, :on odd?, :update identity}))
       (is (contains? (transitions-of (add-transition parity :even :odd odd? const-odd))
                      {:from :even, :to :odd, :on odd?, :update const-odd})))))
 

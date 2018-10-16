@@ -1,14 +1,15 @@
 (ns cypress.state-machine
+  (:refer-clojure :exclude [identity])
   (:require [clojure.string :as str]))
-
-(defn identity-update
-  [app-state _ui-state _triggering-event]
-  app-state)
 
 (defn blank-state-machine
   [start-state]
   {:start start-state
    :transitions ()})
+
+(defn identity
+  [app-state _ui-state _triggering-event]
+  app-state)
 
 (defn- name->culprit
   [nombre]
@@ -83,7 +84,7 @@
   ([state-machine transition-seq]
    (apply add-transition state-machine transition-seq))
   ([state-machine from to on]
-   (add-transition state-machine from to on identity-update))
+   (add-transition state-machine from to on identity))
   ([state-machine from to on update-state]
    (validate-kw from "the state to trigger 'from'")
    (validate-kw-or-fn on "the type of event to trigger 'on'")
