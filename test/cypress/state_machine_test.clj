@@ -71,7 +71,7 @@
 (deftest dispatched-transition?-test
   (testing "dispatched-transition?"
     (testing "finds dispatched transitions"
-      (are [x] (dispatched-transition? x)
+      (are [x] (dispatched-transition? (update x :transitions shuffle))
         (add-transition blank :idle (constantly :active) :_)
 
         (-> blank
@@ -87,7 +87,7 @@
           (add-transition :idle :state-0 :_)
           (add-transition :state-20 #(rand-nth [:idle :state-10]) :_))))
 
-    (testing "returns false state machines without dispatched transitions"
+    (testing "returns false for state machines without dispatched transitions"
       (are [x] (not (dispatched-transition? x))
         blank
         (add-transition blank :idle :active :_)
@@ -125,7 +125,7 @@
     (is (not (connected? (-> (blank-state-machine :oregon)
                            (add-transition :minnesota :south-dakota :road-trip))))))
 
-  (testing "the next simplest"
+  (testing "the next simplest disconnected case"
     (is (not (connected? (-> (blank-state-machine :start)
                            (add-transition :start :next :_)
                            (add-transition :zarquat :plaquitrax :_))))))
