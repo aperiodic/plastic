@@ -11,6 +11,18 @@
   [app-state _ui-state _triggering-event]
   app-state)
 
+(defn compose-transitions
+  ([t1 t2]
+   (fn [app-state ui-state event]
+     (-> (t2 app-state ui-state event)
+       (t1 ui-state event))))
+  ([t1 t2 t3 & ts]
+   (let [all-ts (reverse (concat [t1 t2 t3] (seq ts)))
+         [tn tn1] (take 2 all-ts)
+         other-ts (-> (drop 2 all-ts) reverse)]
+     (apply compose-transitions
+            (concat other-ts [(compose-transitions tn1 tn)])))))
+
 (defn- name->culprit
   [nombre]
   (if (empty? nombre)

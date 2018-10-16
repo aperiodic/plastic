@@ -5,8 +5,37 @@
             [cypress.useful :refer [kw cartesian]]))
 
 (def blank (blank-state-machine :idle))
-
 (def transitions-of (comp set :transitions))
+
+(defn mark-tn
+  [n]
+  (fn [state ui-state event]
+    (let [kw (keyword (str "t" n))]
+      (update state :key (fnil #(conj % kw) [])))))
+
+(deftest compose-transitions-test
+  (testing "transitions compose"
+    (let [t1 (fn [state ui-state event] (assoc state :t1 [ui-state event]))
+          t2 (fn [state ui-state event] (assoc state :t2 [ui-state event]))
+          composed (compose-transitions t1 t2)
+          result (composed {} :ui :event)]
+      (is (= [:ui :event] (:t1 result))
+          (= [:ui :event] (:t2 result))))
+
+    (testing "in the correct direction"
+      (let [t1 (mark-tn 1)
+            t2 (mark-tn 2)
+            composed (compose-transitions t2 t1)
+            result (composed {} :ui :event)]
+        (is (= [:t1 :t2] (:key result)))))
+
+    (testing "when there are more than two"
+      (let [t1 (mark-tn 1)
+            t2 (mark-tn 2)
+            t3 (mark-tn 3)
+            composed (compose-transitions t3 t2 t1)
+            result (composed {} :ui :event)]
+        (is (= [:t1 :t2 :t3] (:key result)))))))
 
 (deftest add-transition-test
   (testing "binary arity of add-transition"
