@@ -83,17 +83,18 @@
   "Given an unrolled state machine's transition map for a particular state and
   a triggering event, return the transition triggered by the event (if any), and
   nil otherwise."
-  [state-transitions {::keys [event kind]} logging?]
+  [state-transitions {::keys [event kind]} logging? from]
   (or (get state-transitions kind)
       (if-let [custom-triggered (:cypress/event-recognizers state-transitions)]
         (do
           (when logging?
-            (println "Looking for a recognition function that fires on this"
-                     kind "event"))
+            (println "Looking for a recognition function from" from
+                     "that fires on this" kind "event"))
           (loop [transitions custom-triggered]
             (if (empty? transitions)
               (when logging?
-                (println "No recognition function fired on the" kind "event"))
+                (println "No recognition function from" from
+                         "fired on the" kind "event"))
               (let [{should-fire? :on, :as transition} (first transitions)]
                 (if (should-fire? event)
                   (do (when logging?
@@ -114,7 +115,8 @@
           (.log js/console event))
         (if-let [t (triggered-transition (get ui-transitions ui-state)
                                          wrapped-event
-                                         logging?)]
+                                         logging?
+                                         ui-state)]
           (do
             (when logging?
               (println "Found transition from" ui-state "on" kind))
