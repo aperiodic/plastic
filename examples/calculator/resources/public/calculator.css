@@ -1,0 +1,50 @@
+body {
+  background-color: #f7f7f7;
+  font-size: 14px;
+}
+
+button {
+  float: left;
+  width: 25%;
+  padding-left: 0em;
+  padding-right: 0em;
+}
+
+div.button-row {
+  clear: both;
+}
+
+button.wide {
+  width: 50%;
+}
+
+#calculator {
+  width: 7.75em;
+}
+
+#display {
+  margin-bottom: 0.2em;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #aab3aa;
+  border-radius: 2px;
+  text-align: right;
+}
+
+#value {
+  padding-right: 0.5em;
+}
+
+#operation {
+  float: left;
+}
+
+/*
+ * Button-Specific Overrides
+ */
+
+#btn-0 {
+  text-align: left;
+  padding-left: 0.6em;
+}
+
