@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.0] - 2018-11-10
 ### Added
 - Support for transitions with "custom triggers": functions on events that decide when the transition will be followed.
 - `compose-transitions` utility in state machine namespace.
@@ -27,6 +27,6 @@
 - Support for "dispatched transitions" that use a function of event & app state to choose target state.
 - Fake "skip" event to allow more flexibility in state machine definition.
 
-[Unreleased]: https://github.com/aperiodic/cypress/compare/0.2.0...HEAD
+[0.3.0]: https://github.com/aperiodic/cypress/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/aperiodic/cypress/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/aperiodic/cypress/releases/tag/0.1.0
