@@ -41,7 +41,7 @@
 (defn new-state
   [win-at]
   {:targets (rand-targets num-targets w h widest-target)
-   :status :progressing})
+   :status :playing})
 
 (defonce !state (atom (new-state num-targets)))
 
@@ -58,8 +58,9 @@
        (:r target))))
 
 (defn target-hit?
-  [state x y]
-  (some (partial in-target? x y) (:targets state)))
+  [targets click-x click-y]
+  (-> (some (partial in-target? click-x click-y) targets)
+    boolean))
 
 (defn event->pos
   [mouse-event]
@@ -67,17 +68,17 @@
     [(- (.-clientX mouse-event) (.-left root-pos))
      (- (.-clientY mouse-event) (.-top root-pos))]))
 
-(defn hit-based-routing
+(defn hit-or-miss
   [app-state mouse-down]
-  (let [[x y] (event->pos mouse-down)]
-    (if-not (target-hit? app-state x y)
-      :lost
-      ;; if they hit the last target, they've won
-      (if (= 1 (count (:targets app-state)))
-        :won
-        :progressing))))
+  (let [[mx my] (event->pos mouse-down)
+        hit? (target-hit? (:targets app-state) mx my)
+        one-target? (= 1 (count (:targets app-state)))]
+    (cond
+      (not hit?) :lost
+      (and hit? one-target?) :won
+      :else-hit :playing)))
 
-(defn advance-or-end
+(defn advance-and-track-status
   [app-state ui-state mouse-down]
   (let [[x y] (event->pos mouse-down)
         without-hit-target (->> (:targets app-state)
@@ -91,10 +92,10 @@
   (new-state num-targets))
 
 (def target-hitting-game
-  (-> (sm/blank-state-machine :progressing)
-    (sm/add-transition :progressing hit-based-routing :mouse-down advance-or-end)
-    (sm/add-transition :lost :progressing :mouse-down new-game)
-    (sm/add-transition :won :progressing :mouse-down new-game)))
+  (-> (sm/blank-state-machine :playing)
+    (sm/add-transition :playing hit-or-miss :mouse-down advance-and-track-status)
+    (sm/add-transition :lost :playing :mouse-down new-game)
+    (sm/add-transition :won :playing :mouse-down new-game)))
 
 ;;
 ;; Render State to DOM w/Om
@@ -154,7 +155,7 @@
     (case (:status state)
       :won (render-win state)
       :lost (render-loss state)
-      :progressing (render-round state))))
+      :playing (render-round state))))
 
 ;;
 ;; DOM Hookup
