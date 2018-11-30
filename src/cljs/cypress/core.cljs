@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :as async]
             [clojure.core.async :refer [>! <! chan take! put!]]
+            [clojure.pprint :refer [pprint]]
             [clojure.set :as set :refer [subset?]]
             [cypress.state-machine :as sm]))
 
@@ -132,6 +133,7 @@
                                          (app-update app-state to event))]
               (when logging?
                 (println "Transition complete, now in UI state" ui' "with new app state")
+                (pprint app')
                 (println))
               (reset! !state app')
               (recur ui' app')))
