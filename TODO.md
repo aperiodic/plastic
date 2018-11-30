@@ -13,3 +13,4 @@
 [ ] more examples (crib from Zelkova)
 [x] introductory tutorial
 [ ] landing page
+[ ] remove support for custom triggers

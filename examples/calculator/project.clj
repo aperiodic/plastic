@@ -8,7 +8,7 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.465"]
                  [org.omcljs/om "1.0.0-beta1"]
-                 [cypress "0.3.0"]]
+                 [cypress "0.3.1-SNAPSHOT"]]
 
   :source-paths ["src/cljs" "src/cljc"]
   :plugins [[lein-cljsbuild "1.1.7"]

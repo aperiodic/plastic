@@ -24,28 +24,19 @@
 
 (defn op-node
   [op]
-  (node-with-id (name op))
-  #_(case op
-    + (node-with-id "add")
-    - (node-with-id "subtract")
-    * (node-with-id "multiply")
-    / (node-with-id "divide")))
+  (node-with-id (name op)))
 
-(defn emit-on-chan
-  [element event-name emitted-event]
-  (let [out (async/chan 4)]
-    (.addEventListener element event-name
-      (fn [_]
-        (async/put! out emitted-event))
-      #js {:passive false})
-    out))
+(defn add-emitter!
+  [element event-name emitted-event channel]
+  (.addEventListener element event-name
+    (fn [_]
+      (async/put! channel emitted-event))
+    #js {:passive false})
+  nil)
 
 ;;
 ;; DOM Rendering
 ;;
-
-;; ooh, the only thing we want to render is the display; everything else
-;; is static
 
 (defn format-value
   [n]
@@ -56,7 +47,7 @@
   (case (:ui-state state)
     :zero 0
     :result (:result state)
-    :choose-operation (or (:entry state) (:result state))
+    :choose-op (or (:entry state) (:result state) 0)
     (:1st-arg :nth-arg :identity) (:entry state)))
 
 (defn operation-symbol
@@ -64,8 +55,8 @@
   (case (:ui-state state)
     (:zero :identity :1st-arg) nil
     :result (calc/op-name (get-in state [:mem :operation :kw]))
-    (:choose-operation :nth-arg) (let [op-kw (get-in state [:operation :kw])]
-                                   (calc/op-name op-kw))))
+    (:choose-op :nth-arg) (let [op-kw (get-in state [:operation :kw])]
+                            (calc/op-name op-kw))))
 
 (defn render-display
   [state]
@@ -81,28 +72,40 @@
 
 (defonce !state (atom (new-state)))
 
-(defn add-event-emitters!
+(defn add-calculator-event-emitters!
   []
-  (let [digit-channels (-> (for [i (range 0 10)]
-                             (let [btn (digit-node i)
-                                   event {:kind :digit, :value i}]
-                               (emit-on-chan btn "mousedown" event)))
-                         doall)
-        op-channels (for [op [:add :subtract :multiply :divide]]
-                      (let [btn (op-node op)
-                            event {:kind :operation, :operation op}]
-                        (emit-on-chan btn "mousedown" event)))]
-    (concat
-      digit-channels
-      op-channels
-      [(emit-on-chan (node-with-id "clear") "mousedown" {:kind :clear-entry})
-       (emit-on-chan (node-with-id "all-clear") "mousedown" {:kind :clear-all})
-       (emit-on-chan (node-with-id "equals") "mousedown" {:kind :equals})])))
+  (let [digits-channel (async/chan 2)
+        operations-channel (async/chan 2)
+        c-channel (async/chan 2)
+        ac-channel (async/chan 2)
+        equals-channel (async/chan 2)]
+    ;; hook up the digit buttons
+    (doseq [i (range 0 10)]
+      (let [event {:value i}]
+        (add-emitter! (digit-node i) "mousedown" event digits-channel)))
+    ;; hook up the operation buttons
+    (doseq [op [:add :subtract :multiply :divide]]
+      (let [event {:operation op}]
+        (add-emitter! (op-node op) "mousedown" event operations-channel)))
+    ;; hook up the 'C', 'AC', and '=' buttons
+    (add-emitter!
+      (node-with-id "clear") "mousedown" :clear-entry c-channel)
+    (add-emitter!
+      (node-with-id "all-clear") "mousedown" :clear-all ac-channel)
+    (add-emitter!
+      (node-with-id "equals") "mousedown" :equals equals-channel)
+    ;; return mapping of event kind to event channel
+    {:digit digits-channel
+     :operation operations-channel
+     :clear-entry c-channel
+     :clear-all ac-channel
+     :equals equals-channel}))
 
 (defn start!
   []
-  (cyp/init! (root-node) (add-event-emitters!) calculator !state
-             {:logging true})
+  (let [custom-event-channels (add-calculator-event-emitters!)]
+    (cyp/init! (root-node) custom-event-channels calculator !state
+               {:logging true}))
   (om/root
     (fn [state _owner]
       (reify
