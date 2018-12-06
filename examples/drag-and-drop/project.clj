@@ -18,10 +18,10 @@
   :cljsbuild {
     :builds [{
       :id "dev"
-      :source-paths ["src/cljs"]
+      :source-paths ["src/cljs" "src/cljc"]
       :figwheel true
       :compiler {
-        :main "cypress.examples.drag-and-drop"
+        :main "cypress.examples.drag-and-drop.main"
         :asset-path "js/out"
         :output-to "resources/public/js/drag-and-drop.js"
         :output-dir "resources/public/js/out"
