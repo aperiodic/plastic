@@ -1,5 +1,6 @@
 (ns cypress.examples.drag-and-drop.main
-  (:require [cypress.examples.drag-and-drop.core
+  (:require [cljs.core.async :as async]
+            [cypress.examples.drag-and-drop.core
              :refer [drawing-and-dragging-boxes move-box !state]]
             [cypress.core :as cyp]
             [cypress.state-machine :as sm]
@@ -49,13 +50,31 @@
 ;; Main & Friends
 ;;
 
-(defn app-node
+(defn node-with-id
+  [id]
+  (.getElementById js/document (str id)))
+
+(defn app-node [] (node-with-id "drag-and-drop"))
+(defn delete-button [] (node-with-id "delete-last"))
+
+(defn add-emitter!
+  [element event-name emitted-event channel]
+  (.addEventListener element event-name
+    (fn [_]
+      (async/put! channel emitted-event))
+    #js {:passive false})
+  nil)
+
+(defn custom-event-channels!
   []
-  (.getElementById js/document "drag-and-drop"))
+  (let [delete-chan (async/chan 2)]
+    (add-emitter! (delete-button) "mousedown" {:kind :delete-last} delete-chan)
+    {:delete-last delete-chan}))
 
 (defn start!
   []
-  (cyp/init! js/document drawing-and-dragging-boxes !state)
+  (let [custom-events (custom-event-channels!)]
+    (cyp/init! (app-node) custom-events drawing-and-dragging-boxes !state))
   (om/root
     (fn [state _owner]
       (reify

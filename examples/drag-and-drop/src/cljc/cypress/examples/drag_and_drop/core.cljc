@@ -88,6 +88,10 @@
       (update :boxes concat (map #(move-box % delta-x delta-y) drag-boxes))
       (assoc :drag nil))))
 
+(defn delete-last-box
+  [app-state ui-state mouse-down]
+  (update app-state :boxes (comp vec drop-last)))
+
 (defn dragging-or-drawing
   [app-state mouse-down]
   (let [[x y] (pos mouse-down)]
@@ -103,6 +107,7 @@
 
 (def drawing-and-dragging-boxes
   (-> (sm/blank-state-machine :idle)
+    (sm/add-transition :idle :idle :delete-last delete-last-box)
     (sm/add-transition :idle dragging-or-drawing :mouse-down start-drag-or-draw)
 
     (sm/add-transition :drawing :drawing :mouse-move update-drawing)
