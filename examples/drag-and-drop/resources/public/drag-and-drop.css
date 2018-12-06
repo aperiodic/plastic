@@ -11,5 +11,7 @@ body {
 
 .box {
   position: absolute;
+
   background-color: #333;
+  cursor: pointer;
 }

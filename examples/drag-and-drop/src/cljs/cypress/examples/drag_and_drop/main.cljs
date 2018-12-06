@@ -1,5 +1,6 @@
 (ns cypress.examples.drag-and-drop.main
-  (:require [cypress.examples.drag-and-drop.core :refer [drag-to-draw-a-box !state]]
+  (:require [cypress.examples.drag-and-drop.core
+             :refer [drawing-and-dragging-boxes move-box !state]]
             [cypress.core :as cyp]
             [cypress.state-machine :as sm]
             [om.core :as om]
@@ -28,13 +29,21 @@
                               :width (abs width)
                               :height (abs height)}})))
 
+(defn render-dragged-boxes
+  [{[x_0 y_0] :start, [x y] :current, boxes :boxes}]
+  (let [delta-x (- x x_0)
+        delta-y (- y y_0)]
+    (map render-box (map #(move-box % delta-x delta-y) boxes))))
+
 (defn render-app
   [state]
   (dom/div nil
     (dom/div #js {:className "boxes-wrapper"}
       (map render-box (:boxes state)))
-    (if-let [drag-box (:drag state)]
-      (render-box drag-box))))
+    (dom/div #js {:className "dragged-wrapper"}
+      (render-dragged-boxes (:drag state)))
+    (if-let [box-being-drawn (:drawing state)]
+      (render-box box-being-drawn))))
 
 ;;
 ;; Main & Friends
@@ -46,7 +55,7 @@
 
 (defn start!
   []
-  (cyp/init! js/document drag-to-draw-a-box !state)
+  (cyp/init! js/document drawing-and-dragging-boxes !state)
   (om/root
     (fn [state _owner]
       (reify
