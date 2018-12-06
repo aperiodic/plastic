@@ -104,6 +104,11 @@
    (update state-machine :transitions conj {:from from, :to to, :on on
                                             :update update-state})))
 
+;; define 'add' as an alias for add-transition, with the same docstring
+(let [add-t-meta (meta #'add-transition)]
+  (def ^{:doc (:doc add-t-meta), :arglists (:arglists add-t-meta)}
+    add))
+
 (defn- transitions-from*
   [state-or-frontier transitions]
   (let [away-from-here? (if (set? state-or-frontier)
