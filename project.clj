@@ -1,4 +1,4 @@
-(defproject plastic "0.3.1-SNAPSHOT"
+(defproject plastic "0.3.1"
   :description "Webapp state definition with pure event streams, not DOM event handlers."
   :url "https://github.com/aperiodic/plastic"
   :license {:name "Eclipse Public License"
