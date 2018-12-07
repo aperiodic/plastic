@@ -1,4 +1,4 @@
-(defproject cypress/click-game "0.1.0-SNAPSHOT"
+(defproject plastic/click-game "0.1.0-SNAPSHOT"
   :description "A simple click-the-dots game to show how to add logic to state machine transitions."
   :url "https://example.com"
   :license {:name "Eclipse Public License"
@@ -8,7 +8,7 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.465"]
                  [org.omcljs/om "1.0.0-beta1"]
-                 [cypress "0.3.0"]]
+                 [plastic "0.3.0"]]
 
   :source-paths ["src/cljs"]
   :plugins [[lein-cljsbuild "1.1.7"]
@@ -21,7 +21,7 @@
       :source-paths ["src/cljs"]
       :figwheel true
       :compiler {
-        :main "cypress.examples.click-game"
+        :main "plastic.examples.click-game"
         :asset-path "js/out"
         :output-dir "resources/public/js/out"
         :output-to "resources/public/js/game.js"

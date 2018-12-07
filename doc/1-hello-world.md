@@ -1,8 +1,8 @@
-# Hello World with Cypress.
+# Hello World with Plastic
 
 ## Introduction
 
-This tutorial walks you through building a trivial app with Cypress, starting from something like the figwheel template (run `lein new figwheel cypress-example` to get a copy).
+This tutorial walks you through building a trivial app with plastic, starting from something like the figwheel template (run `lein new figwheel plastic-example` to get a copy).
 The application will count the number of mouse down and up events.
 
 The full source of this application is available [in the examples folder][example].
@@ -10,21 +10,25 @@ You can either open up that source alongside this and use this as a guide to tha
 
 [example]: ../examples/hello-world
 
+### How to Follow Along
+
+This guide is meant to be read alongside the [source code to the embedded hello-world example][hello-world-main] in the examples folder.
+You should open that source code in a new browser tab or editor pane such that you can see both that code and this guide at the same time.
+This will allow you to see how all the pieces fit together and jump to parts of the code covered earlier if you want to refresh your memory.
+
+You should also open up a live instance of the example, either [the one hosted on GitHub][gh-hello-world], or by running [`lein figwheel`][figwheel] in the `examples/hello-world` directory (which will also allow you to make your own changes and see their effects shortly after saving).
+
+[click-game-main]: ../examples/hello-world/src/cljs/plastic/examples/hello_world/main.cljs
+[figwheel]: https://github.com/bhauman/lein-figwheel
+[gh-click-game]: TODO
+
 ## Getting Started
 
-For those of you doing it all yourself, add these dependencies to the project.clj:
-```clj
-[cypress "0.3.0"]
-[org.omcljs/om "1.0.0-beta1"]
-```
-
-FIXME: actually, maybe make a template for this? they should have figwheel & cljsbuild set up, but going over that part is outside the scope of this tutorial.
-
-Now open up the main clojurescript source file, and import the Cypress namespaces we'll be using:
+Open up the main clojurescript source file, and import the plastic namespaces we'll be using:
 ```clj
 (ns tiny-example
-  (:require [cypress.core :as cypress]
-            [cypress.state-machine :as state]))
+  (:require [plastic.core :as plastic]
+            [plastic.state-machine :as state]))
 ```
 
 Then we can define the application's starting state.
@@ -35,7 +39,7 @@ It's pretty simple because all we care up is the two numbers, which we'll call `
 
 ### State Machine Definition
 
-Cypress is all about state machines, so we should get right to writing the state machine to describe this application's behavior.
+Plastic is all about state machines, so we should get right to writing the state machine to describe this application's behavior.
 We'll call the state machine 'down-then-up.'
 
 ```clj
@@ -50,19 +54,19 @@ The next two lines add two transitions: the first from the `:idle` state to `:ac
 
 ### Event Loop Kickoff
 
-Now that we have a valid state machine, we can start up cypress's event loop.
+Now that we have a valid state machine, we can start up plastic's event loop.
 Let's define a function called `main` to kick everything off, then call it:
 
 ```clj
 (defn main
   []
-  (cypress/init! js/document down-then-up !state {:logging true}))
+  (plastic/init! js/document down-then-up !state {:logging true}))
 
 (main)
 ```
 
-When we save our file, load up it up in the browser, and open the console, then we can observe messages from Cypress about the state transitions in our app.
-We now have a technically correct but useless Cypress app!
+When we save our file, load up it up in the browser, and open the console, then we can observe messages from plastic about the state transitions in our app.
+We now have a technically correct but useless plastic app!
 It's almost like we're mathematicians over here.
 
 ## Making It Do Things
@@ -71,7 +75,7 @@ It's uninteresting for two reasons:
   1) we don't reflect the app's state in the DOM in any way, which is you know, the whole point of the web;
   2) in our state machine transitions, we didn't define any handlers!
 
-When we omit a handler, Cypress supplies the identity handler as a default; it just returns the same app state it's given.
+When we omit a handler, plastic supplies the identity handler as a default; it just returns the same app state it's given.
 
 ### Render the State
 
@@ -79,17 +83,17 @@ Showing the state in the DOM is easily solved with Om.
 Let's go back up to the top of the file and add Om to the namespace form:
 ```clj
 (ns tiny-example
-  (:require [cypress.core :as cyp]
-              [cypress.state-machine :as sm]
-              [om.core :as om]
-              [om.dom :as dom]))
+  (:require [plastic.core :as plastic]
+            [plastic.state-machine :as sm]
+            [om.core :as om]
+            [om.dom :as dom]))
 ```
 
 Bouncing back down to the `main` function at the bottom, add a simple Om app that renders the click counts.
 ```clj
 (defn main
   []
-  (cypress/init! js/document down-then-up !state {:logging true})
+  (plastic/init! js/document down-then-up !state {:logging true})
   (om/root
     (fn [state _]
       (reify
@@ -105,7 +109,7 @@ Bouncing back down to the `main` function at the bottom, add a simple Om app tha
 ### Change the State on Events
 
 Now we're ready to define some handlers to increment the state's counts.
-Event handlers for Cypress must always take three arguments:
+Event handlers for plastic must always take three arguments:
   * the current application state;
   * the keyword denoting the UI state machine's new state;
   * the DOM event that triggered the UI state machine transition associated with this handler.
@@ -121,7 +125,7 @@ Knowing this, we can define our event handlers up above the state machine:
   (update app-state :ups inc))
 ```
 
-Then we can add them to our state machine by passing them to `cypress.state-machine/add-transition`:
+Then we can add them to our state machine by passing them to `plastic.state-machine/add-transition`:
 
 ```clj
 (def click-unclick
@@ -131,4 +135,4 @@ Then we can add them to our state machine by passing them to `cypress.state-mach
 ```
 
 After saving the changes and moving back to the browser, we can see the counts go up when we click.
-Congratulations! You now have your first complete Cypress application.
+Congratulations! You now have your first complete plastic application.

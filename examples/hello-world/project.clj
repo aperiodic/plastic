@@ -1,5 +1,5 @@
-(defproject cypress/hello-world "0.1.0-SNAPSHOT"
-  :description "One of the simplest possible apps using cypress."
+(defproject plastic/hello-world "0.1.0-SNAPSHOT"
+  :description "One of the simplest possible apps using plastic."
   :url "https://example.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -8,7 +8,7 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.465"]
                  [org.omcljs/om "1.0.0-beta1"]
-                 [cypress "0.3.0"]]
+                 [plastic "0.3.0"]]
 
   :source-paths ["src/cljs" "src/cljc"]
   :plugins [[lein-cljsbuild "1.1.7"]
@@ -21,7 +21,7 @@
       :source-paths ["src/cljs" "src/cljc"]
       :figwheel true
       :compiler {
-        :main "cypress.examples.hello-world.main"
+        :main "plastic.examples.hello-world.main"
         :asset-path "js/out"
         :output-to "resources/public/js/hello_world.js"
         :output-dir "resources/public/js/out"

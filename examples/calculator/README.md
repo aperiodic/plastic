@@ -1,6 +1,6 @@
 # Calculator
 
-This is a simple four-function calculator implemented using Cypress.
+This is a simple four-function calculator implemented using plastic.
 
 ## Usage
 

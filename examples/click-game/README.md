@@ -1,6 +1,6 @@
-# dynamic-transitions
+# click-game
 
-This is your new cypress- & om-based webapp.
+This is your new plastic & om-based webapp.
 Right now, it tracks mouse clicks; the rest is up to you.
 
 ## Usage

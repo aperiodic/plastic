@@ -1,6 +1,6 @@
-(defproject cypress "0.3.1-SNAPSHOT"
+(defproject plastic "0.3.1-SNAPSHOT"
   :description "Webapp state definition with pure event streams, not DOM event handlers."
-  :url "https://github.com/aperiodic/cypress"
+  :url "https://github.com/aperiodic/plastic"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
@@ -22,9 +22,9 @@
       :source-paths ["src/cljs" "src/cljc" "dev-sandbox"]
       :figwheel true
       :compiler {
-        :main "cypress.sandbox.main"
+        :main "plastic.sandbox.main"
         :asset-path "js/out"
-        :output-to "resources/public/js/cypress.js"
+        :output-to "resources/public/js/plastic.js"
         :output-dir "resources/public/js/out"
         :optimizations :none
         :pretty-print true}}]})

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added guided documentation on getting started, using dispatch functions, and using custom events, which each accompany one of the embedded examples.
 - Add the 'drag-and-drop' example.
+- Change name from 'cypress' to 'plastic'
 
 ### Fixed
 - Actually log the application state in the event loop when logging is enabled.
@@ -21,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Custom event channels can now be passed as a flat collection of channels rather than a map of event kind keyword to channel producing that kind of event.
-- Rename the `identity-update` function in cypress.state-machine to simply `identity`.
+- Rename the `identity-update` function in plastic.state-machine to simply `identity`.
 - When debug logging enabled for event loop, log each event using the console's native logging facilities.
 
 ## [0.2.0] - 2018-06-29
@@ -40,6 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for "dispatched transitions" that use a function of event & app state to choose target state.
 - Fake "skip" event to allow more flexibility in state machine definition.
 
-[0.3.0]: https://github.com/aperiodic/cypress/compare/0.2.0...0.3.0
-[0.2.0]: https://github.com/aperiodic/cypress/compare/0.1.0...0.2.0
-[0.1.0]: https://github.com/aperiodic/cypress/releases/tag/0.1.0
+[0.3.0]: https://github.com/aperiodic/plastic/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/aperiodic/plastic/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/aperiodic/plastic/releases/tag/0.1.0

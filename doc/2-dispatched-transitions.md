@@ -2,10 +2,10 @@
 
 The hello world example used a static state machine, meaning the same events always lead to the same transitions to the same UI states, regardless of the app state.
 In real-world applications, we will often want to choose which target UI state we want to transition to based on the app state and the triggering event.
-Cypress refers to these transitions as 'dispatched' transitions.
+Plastic refers to these transitions as 'dispatched' transitions.
 You may have already thought of an easy way to define them: when calling add-transition, give a function instead of a keyword as the 'to' argument which designates where the transition will go.
 
-In the domain of Cypress apps, the dispatch function is often a hit test.
+In the domain of plastic apps, the dispatch function is often a hit test.
 This guide walks you through creating an uninteresting game where you must precisely click on all the targets to win, without misclicking even once.
 On each click, our dispatch function decides to progress the game if it's a hit, or end the game in failure if a miss.
 
@@ -17,7 +17,7 @@ This will allow you to satiate your curiousity about how those functions actuall
 
 You should also open up a live instance of this game, either [the one hosted on GitHub][gh-click-game], or by running [`lein figwheel`][figwheel] in the `examples/click-game` directory (which will also allow you to make your own changes and see their effects shortly after saving).
 
-[click-game-main]: ../examples/click-game/src/cljs/cypress/examples/click_game.cljs
+[click-game-main]: ../examples/click-game/src/cljs/plastic/examples/click_game.cljs
 [figwheel]: https://github.com/bhauman/lein-figwheel
 [gh-click-game]: TODO
 
@@ -96,8 +96,8 @@ We now need to define a state machine for the whole game that uses this dispatch
 
 ## Using the Dispatch Function
 
-As mentioned in the introduction, dispatch functions can be used in place of a UI state keyword as the `to` argument to `cypress.state-machine/add-transition`.
-Assuming that `cypress.state-machine` is required as `sm`, we can define a state machine for this game:
+As mentioned in the introduction, dispatch functions can be used in place of a UI state keyword as the `to` argument to `plastic.state-machine/add-transition`.
+Assuming that `plastic.state-machine` is required as `sm`, we can define a state machine for this game:
 ```clj
 (def target-hitting-game
   (-> (sm/blank-state-machine :playing)
@@ -111,7 +111,7 @@ The only other transitions needed are the two that start new games from the vict
 
 ## Conclusion
 
-This contrived example is a somewhat extreme case, but I've found that most of my Cypress applications make use of dispatch functions.
+This contrived example is a somewhat extreme case, but I've found that most of my plastic applications make use of dispatch functions.
 Frequently, they will have a handful of primary modes of interaction, and a dispatch function will define the conditions that lead to each mode.
 For example, in [Lab Maniac][lab-maniac], whenever the user clicks a dispatch function figures out whether a the click was on an unselected card, a selected card, or the 'table', and transitions to the single-card drag, selection drag, or selecting states accordingly.
 Now that you've read this guide, you should understand when you'll need to use a dispatch function, and how to define one.
