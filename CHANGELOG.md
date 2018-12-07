@@ -1,5 +1,18 @@
 # Change Log
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## Unreleased
+### Added
+- Added guided documentation on getting started, using dispatch functions, and using custom events, which each accompany one of the embedded examples.
+- Add the 'drag-and-drop' example.
+
+### Fixed
+- Actually log the application state in the event loop when logging is enabled.
+
 ## [0.3.0] - 2018-11-10
 ### Added
 - Support for transitions with "custom triggers": functions on events that decide when the transition will be followed.
